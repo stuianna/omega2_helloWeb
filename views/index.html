@@ -44,6 +44,9 @@ $(
         //only gets checked every 200ms.
         var pwmChanged = false;
 
+		//This is the data which will be sent back from the server.
+		var receivedData = null;
+
         //Now the callback for the pwm slider sets the variable
         $('#ledPWM').change(function(){
             pwmChanged = true;
@@ -64,8 +67,28 @@ $(
                 //Get the slider value
                 var dutyCycle = $('#ledPWM').val();
 
-                //Update the duty cycle in the python program
-                $.get('/_state',{state: stateValue,duty:dutyCycle});
+				//This is how to use ajax POST method to send data to server
+				$.ajax({
+					url: "/_state",
+					type: "POST",
+					data: JSON.stringify({"state": stateValue,"duty":dutyCycle}),
+					contentType: "application/json",
+					dataType: "json",
+
+					//The data sent back from the server is passed into this function
+					success: function(data,status) {
+
+						//Here we store the data in another variable so it could be used anywhere
+						receivedData = data;
+						
+						//Print all received data to console. (right click on page -> inspect -> bottom of panel)
+						console.log(receivedData.duty)
+						console.log(receivedData.state)
+						console.log(receivedData.requests)
+					}
+
+				});
+
             }
 
         },200);

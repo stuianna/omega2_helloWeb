@@ -4,7 +4,9 @@ A simple web based application for controlling the Omega2+'s on-board LED over a
 
 ![App Preview](preview.png)
 
-The application uses [jQuery](https://jquery.com/) for the front-end user interface and Python's [bottle](https://bottlepy.org/docs/dev/) as the web-framework. It is designed to provide a simple template which can built upon to create larger IOT projects.
+The application uses [jQuery](https://jquery.com/) for the front-end user interface and Python's [bottle](https://bottlepy.org/docs/dev/) as the web-framework.  It is designed to provide a simple template which can built upon to create larger IOT projects.
+
+The application also features a method for sending data between the front-end and bottle python server.
 
 # Installation
 
