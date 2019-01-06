@@ -11,6 +11,8 @@
     <script src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
     <script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
 
+    <!-- Plotly library -->
+    <script src="https://cdn.plot.ly/plotly-1.2.0.min.js"></script>
 </head>
 
 
@@ -44,16 +46,54 @@ $(
         //only gets checked every 200ms.
         var pwmChanged = false;
 
-		//This is the data which will be sent back from the server.
-		var receivedData = null;
 
         //Now the callback for the pwm slider sets the variable
         $('#ledPWM').change(function(){
             pwmChanged = true;
         })
 
+        //Make two arrays, each 100 long for the plot data
+        var plotData_y = Array.apply(null, new Array(100)).map(Number.prototype.valueOf,0)
+        var plotData_x = Array.apply(null, new Array(100)).map(Number.prototype.valueOf,0)
+
+        //Populate the x plot data with number 0 - 10 in increments of 0.1
+        for(i = 0; i < plotData_x.length; i++){
+
+            plotData_x[i] = i/10;
+        }
+
+        //Make the inital data for the plot
+		var data = {
+			x: plotData_x,
+			y: plotData_y,
+		};
+
+        //Specify the plot layout
+		var layout = { 
+		  title: 'PWM History',
+		  font: {size: '18em'},
+          xaxis: {
+              showgrid:false,
+              ticks:'',
+              showticklabels:false,
+          },
+          yaxis: {
+              range:[0,100] //Fix the rage on the y axis
+          },
+		};
+
+        //Setup the plot
+		Plotly.newPlot('plot', [data], layout);
+
+        //Make the plot resize with window changes
+		window.onresize = function() { Plotly.Plots.resize( document.getElementById('plot') ); };
+
+		//This is the data which will be sent back from the server.
+		var receivedData = null;
+
         //Our interval just check the pwmChanged variable, resets it if needed
         //and sends data to the server
+        //Update the plot in this function too
         setInterval(function(){
 
             if(pwmChanged){
@@ -91,34 +131,63 @@ $(
 
             }
 
-        },200);
+            //Update the plot values
+            //Remove one from the start of the array
+			plotData_y.shift();
 
+            //Add new value to the start
+            plotData_y.push($('#ledPWM').val());
+
+            //Alternively this data could come from the server using a post request
+
+            //Redraw the plot
+			Plotly.restyle('plot',
+                    {
+                        x: [plotData_x],
+                        y: [plotData_y],
+                    } ,[0]); // This is a list of traces to update, we only have 1
+
+        },200);
     }
 );
 </script>
 
-<!-- Some CSS styling, this just forces the foot to be at the bottom of the viewport-->
+<!-- Some CSS styling-->
 <style>
+   /*Force footer to bottom of page*/
     #pageFooter{
-
         position: absolute;
         bottom: 0;
-        width: 100%;
+        width:99vw;
+    }
+   /*Set a slight gap on either side of the page*/
+    #pageID{
+
+        padding-left:0.5vw;
+        padding-right:0.5vw;
+        width:99vw;
+    }
+    #plot {
+      border: 2px solid black;
+    }
+   /*Hides the tool bar on the plot*/
+    .modebar{
+        display: none !important;
     }
 </style>
 
 <body>
 
     <!-- The 'data-theme' is the theme of the page, a is light b is dark-->
-    <div data-role="page" data-theme="a" id=pageID>
+    <div data-role="page" data-theme="a" id='pageID'>
 
         <!-- Page Header -->
-        <div data-role="header">
+        <div data-role="header" class='outer' id='header'>
             <h5>Omega2+ Example</h5>
         </div>
 
         <!-- Main page content -->
-        <div role="main" class="ui-content">
+        <div role="main" class="outer">
             <p>Toggle the on-board LED with this switch:</p>
 
             <!-- All elements need to have a label, the option values set are what gets sent to
@@ -134,14 +203,15 @@ $(
             <p>Set the duty cycle for the on-board LED with this slider:</p>
             <label for="ledPWM">Duty Cycle:</label>
             <input class="ledControl" type="range" id="ledPWM" min="0" max="100" value="50">
-
         </div>
 
+        <div id="plot" style></div>
+
+
         <!-- Main page footer -->
-        <div data-role="footer" id=pageFooter>
+        <div data-role="footer" id=pageFooter class='outer'>
             <h4><!-- Some text here --></h4>
         </div>
  
     </div>
 </body>
-
