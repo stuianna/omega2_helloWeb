@@ -1,0 +1,124 @@
+<!doctype html>
+
+<!--- Created Jan 2019, Stuart Ianna -->
+
+<head>
+    <!--The viewport is the screen which the user sees-->
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+
+    <!-- JSQuery function library and styles -->
+    <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
+    <script src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+
+</head>
+
+
+<!-- This is the 'interactive' jQuery part of the page -->
+<script type=text/javascript>
+//This '$' function gets called as soon as the page has finished loading.
+$(
+    function() 
+    {
+        //Set the LED slider disabled by default.
+        $('#ledToggle').val('off').slider('refresh');
+
+        //Set up the callback if the slider value is changed
+        $('#ledToggle').change(function(){
+
+            //Get the value of the toggle switch and store it in the variable value
+           var stateValue = $('#ledToggle').val();
+
+            //Get the current value of the PWM slider
+           var dutyCycle = $('#ledPWM').val();
+
+           //Send the request to the python server,
+           // Address = /_state
+           // The data sent matches that expected at the server end (state = on / off)
+           $.get('/_state',{state: stateValue,duty:dutyCycle});
+        })
+
+        //We don't want the slider to send data to the server every time it is changed.
+        //This would spam the server with 100's of requests a second.
+        //To fix this add an interval check to the slider change variable is set, so it
+        //only gets checked every 200ms.
+        var pwmChanged = false;
+
+        //Now the callback for the pwm slider sets the variable
+        $('#ledPWM').change(function(){
+            pwmChanged = true;
+        })
+
+        //Our interval just check the pwmChanged variable, resets it if needed
+        //and sends data to the server
+        setInterval(function(){
+
+            if(pwmChanged){
+
+                //Reset the pwmChanged flag
+                pwmChanged = false;
+
+                //Get the value of the toggle switch and store it in the variable value
+                var stateValue = $('#ledToggle').val();
+
+                //Get the slider value
+                var dutyCycle = $('#ledPWM').val();
+
+                //Update the duty cycle in the python program
+                $.get('/_state',{state: stateValue,duty:dutyCycle});
+            }
+
+        },200);
+
+    }
+);
+</script>
+
+<!-- Some CSS styling, this just forces the foot to be at the bottom of the viewport-->
+<style>
+    #pageFooter{
+
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+    }
+</style>
+
+<body>
+
+    <!-- The 'data-theme' is the theme of the page, a is light b is dark-->
+    <div data-role="page" data-theme="a" id=pageID>
+
+        <!-- Page Header -->
+        <div data-role="header">
+            <h5>Omega2+ Example</h5>
+        </div>
+
+        <!-- Main page content -->
+        <div role="main" class="ui-content">
+            <p>Toggle the on-board LED with this switch:</p>
+
+            <!-- All elements need to have a label, the option values set are what gets sent to
+                the python app -->
+            <label for="ledToggle">LED:</label>
+            <select class="ledControl"  id="ledToggle" data-role="slider" data-mini="true">
+                <!-- These values are sent -->
+                <option value="off">Off</option>
+                <option value="on">On</option>
+            </select>  
+
+            <!--Duty cycle slider-->
+            <p>Set the duty cycle for the on-board LED with this slider:</p>
+            <label for="ledPWM">Duty Cycle:</label>
+            <input class="ledControl" type="range" id="ledPWM" min="0" max="100" value="50">
+
+        </div>
+
+        <!-- Main page footer -->
+        <div data-role="footer" id=pageFooter>
+            <h4><!-- Some text here --></h4>
+        </div>
+ 
+    </div>
+</body>
+
